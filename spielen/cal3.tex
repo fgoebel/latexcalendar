@@ -1,0 +1,140 @@
+%von http://tex.stackexchange.com/questions/135405/print-a-notebook-with-latex
+\documentclass{book}
+\usepackage[%%
+  %textwidth=\dimexpr2\paperwidth/3\relax,
+  %inner=\dimexpr\paperwidth/9\relax,
+  inner = 2cm,
+  %textheight=\dimexpr2\paperheight/3\relax,
+  headheight=15pt,
+  %bottom=\dimexpr2\paperheight/9\relax,
+  bottom  = 2cm,
+  a4paper
+  ]{geometry}
+
+% I've create a boolean to control the presence of the diamond (and subsequently     
+% where the page numbers are placed.  If "true", the diamond will be rendered and    
+% the page numbers will appear in the diamond.  If "false", the diamond will not     
+% be rendered and the page numbers will appear on the bottom of the page.  See       
+% the code where I call the booleans to modify this behavior.  Overall, I've tried   
+% to divorce the formatting for rules and diamonds from the placement of the diamond.
+\newif\ifusediamond
+\usediamondfalse
+\usediamondtrue
+
+%% load the packages and libraries for creating the notebook pages                   
+\usepackage{tikzpagenodes}
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{calc}
+
+%% create the styles for the nodes                                                   
+\tikzset{my page number format/.style={font=\small\itshape},
+         light gray lines/.style={line width=0.5pt,gray!20},
+         medium gray lines/.style={line width=0.5pt,gray!80},
+         dark gray lines/.style={line width=0.5pt,gray},
+         header using a diamond format/.style={diamond,draw,my page number format,inner sep=0pt,minimum size=1cm},
+         header without diamond format/.style={inner sep=0pt},
+         header tail format/.style={double=white}
+          } 
+
+%% set up lengths to set up the environment.  Need these lengths because             
+%% everything has to be set up prior to the first page being shipped out.            
+%% That is, the ruled page is created before TikZ has any page nodes/coordinates     
+%% to work with.                                                                     
+\newlength{\myruledpagewidth}
+\newlength{\myruledpageheight}
+\setlength{\myruledpagewidth}{\textwidth}
+\setlength{\myruledpageheight}{\textheight}
+
+%% Here's the primary macro which generates the actual ruled paper.                  
+%% It takes two argument which are directions: {east}{west} or {west}{east}          
+\def\aeRuledPage#1#2{%%
+  \begin{tikzpicture}
+    \coordinate                  (my top west)     at (0,0);
+    \coordinate                  (my top east)    at (\textwidth,0);
+    \coordinate                  (my bottom west)  at (0,-\myruledpageheight);
+    \coordinate                  (my bottom east) at (\textwidth,-\myruledpageheight);
+
+    %% by setting the bounding box, it'll be easier to place the ruled page
+    %% later and not worry about things (like possibly the diamond) which  
+    %% would change the dimensions of the bounding box.                    
+    \path[use as bounding box] (my top west) rectangle (my bottom east);
+
+    %% The following two lines control how the "dia" node is rendered.     
+    \ifusediamond
+      \node[header using a diamond format] (dia)  at (my top #1) {};
+    \else
+      \node[header without diamond format] (dia)  at (my top #1) {};
+    \fi
+    \coordinate                  (tail) at (my top #2);
+
+    %% The following lines will respect your decision about how the
+    %% diamond is rendered (if at all)                             
+    \draw[dark gray lines]    (dia.south)  -- (my bottom #1);
+    \draw[light gray lines]   (tail.south) -- (my bottom #2);
+    \draw[header tail format] (dia.#2)     -- (tail);
+
+    \foreach \x in {0,1,...,36} {%%
+      \draw[medium gray lines] ($(my bottom east)+(0,\x*0.5cm)$)
+                               --
+                               ($(my bottom west)+(0,\x*0.5cm)$);
+    }
+  \end{tikzpicture}%%
+}
+
+%% Here I set up the boxes that will greatly increase the speed for                  
+%% compiling this document.                                                          
+\makeatletter
+\def\ae@ruled@page#1#2{\aeRuledPage{#1}{#2}}
+
+\newsavebox{\ruledpage@south@east}
+\begin{lrbox}{\ruledpage@south@east}
+  \ae@ruled@page{west}{east}%%
+\end{lrbox}
+
+\newsavebox{\ruledpage@south@west}
+\begin{lrbox}{\ruledpage@south@west}
+  \ae@ruled@page{east}{west}%%
+\end{lrbox}
+
+%% I've created separate macro for the ruled page and the page numbering             
+%% to make it a bit easier to change either without effecting the other.             
+\def\aePlaceRuledPage#1#2{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north #2,inner sep=0pt] at (current page header area.#1 #2) { \usebox{\csname ruledpage@#1@#2\endcsname}};
+  \end{tikzpicture}}
+
+\def\aePlacePageNumber#1{%%
+  \begin{tikzpicture}[remember picture,overlay]
+    \ifusediamond
+      \node[my page number format] at (current page header area.#1) {\thepage};
+    \else
+      \node[my page number format] at (current page text area.#1) {\thepage};
+    \fi
+  \end{tikzpicture}}
+
+\makeatother
+
+%% Setting up the header and footers                                                 
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand\headrulewidth{0pt}
+\fancyhead[OC]{\aePlaceRuledPage{south}{west}}
+\fancyhead[EC]{\aePlaceRuledPage{south}{east}}
+
+%% These next three lines control the position of the page number        
+\ifusediamond
+  %% page number on either the left or right hand side of the top        
+  \fancyhead[OL]{\aePlacePageNumber{south east}}
+  \fancyhead[ER]{\aePlacePageNumber{south west}}
+\else
+  %% page number in the bottom, centered                                 
+  \fancyfoot[C]{\aePlacePageNumber{south}}
+\fi
+
+\usepackage{lipsum}
+\begin{document}
+
+  \foreach \y in {1,2,...,1000} { \makebox{}\clearpage}
+
+\end{document}

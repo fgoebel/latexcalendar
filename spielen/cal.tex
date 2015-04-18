@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage{tikz}
+\newcommand{\kreis}[1]{\tikz \fill[#1] (11pt,11pt) circle (1ex);}
+\newcommand{\vierck}[1]{\tikz \fill[#1] (11pt,11pt) rectangle (1ex,1ex);}
+%wo findet man denn wohl die möglichen "formen"?
+
+
+\usetikzlibrary{arrows.meta,calendar}
+
+
+
+\begin{document}
+
+Hell World!\\
+DAS finde ich schonmal ziemlich cool!
+und mit Text davor (\kreis{red}) und (\kreis{}) und sogar (\vierck{green}) oder auch (\vierck{}) mit Text dahinter usw usf
+
+
+
+das sieht spannend aus das probier ich:
+
+\tikz \draw [thick, rounded corners =8pt]
+	(0,0) -- (0,2) -- (1,3.25) -- (2,2) -- (2,0) -- (0,2) -- (2,2) -- (0,0) -- (2,0);
+
+wir probieren jetzt nochmal was aus!\\
+	\begin{tikzpicture}[scale=3]
+		\draw[step=0.5cm,gray,very thin] (-1.4,-1.4) grid (1.4,1.4);
+		\draw (-1.5,0) -- (1.5,0);
+		\draw (0,-1.5) -- (0,1.5);
+		\draw (0,0) circle [radius=1cm];
+		\foreach \x in {-1.25,-0.75,...,1.25}
+			\draw (\x cm, -1pt) -- (\x cm,1pt);
+		\foreach \y in {-1.25,-0.75,...,1.25}
+			\draw (-1pt , \y cm) -- (1 pt, \y cm);
+	\end{tikzpicture}
+
+
+	\begin{tikzpicture}[scale=3]
+	\path 	( 0,2) node [shape=circle,draw] {}
+			( 0,1) node [shape=circle,draw] {}
+			( 0,0) node [shape=circle,draw] {}
+			( 1,1) node [shape=rectangle,draw] {}
+			(-1,1) node [shape=rectangle,draw] {};
+	\end{tikzpicture}
+		
+\end{document}
